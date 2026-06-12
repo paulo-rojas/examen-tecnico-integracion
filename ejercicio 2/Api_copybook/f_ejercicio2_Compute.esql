@@ -1,0 +1,78 @@
+DECLARE totalProcesados SHARED INTEGER 0;
+DECLARE totalDebitos SHARED INTEGER 0;
+DECLARE totalRechazados SHARED INTEGER 0;
+DECLARE sumaDebitos SHARED DECIMAL 0.00;
+
+
+CREATE COMPUTE MODULE outCompute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN		
+		DECLARE tipo CHARACTER;
+		DECLARE fecha CHARACTER;
+		DECLARE montoTexto CHARACTER;
+		DECLARE monto DECIMAL;
+
+		SET totalProcesados = totalProcesados + 1;
+
+		SET tipo = UPPER(TRIM(CAST(InputRoot.DFDL.REGMOVIMIENTO.TIPO_MOVIMIENTO AS CHARACTER)));
+
+		IF tipo <> 'D' AND tipo <> 'C' THEN
+			SET totalRechazados = totalRechazados + 1;
+			RETURN FALSE;
+		END IF;
+
+		IF tipo = 'C' THEN
+			RETURN FALSE;
+		END IF;
+
+		SET fecha = CAST(InputRoot.DFDL.REGMOVIMIENTO.FECHA_MOV AS CHARACTER);
+
+		SET montoTexto = CAST(InputRoot.DFDL.REGMOVIMIENTO.MONTO AS CHARACTER);
+
+		SET monto = CAST(SUBSTRING(montoTexto FROM 1 FOR 11) || '.' ||
+		                 SUBSTRING(montoTexto FROM 12 FOR 2) AS DECIMAL);
+
+		SET totalDebitos = totalDebitos + 1;
+		SET sumaDebitos = sumaDebitos + monto;
+
+		DELETE FIELD OutputRoot;
+		CREATE LASTCHILD OF OutputRoot DOMAIN('JSON');
+
+		SET OutputRoot.JSON.Data.codigoCuenta =
+			TRIM(CAST(InputRoot.DFDL.REGMOVIMIENTO.COD_CUENTA AS CHARACTER));
+
+		SET OutputRoot.JSON.Data.tipoMovimiento = tipo;
+		SET OutputRoot.JSON.Data.monto = monto;
+
+		SET OutputRoot.JSON.Data.fechaMovimiento =
+			SUBSTRING(fecha FROM 1 FOR 4) || '-' ||
+			SUBSTRING(fecha FROM 5 FOR 2) || '-' ||
+			SUBSTRING(fecha FROM 7 FOR 2);
+
+		SET OutputRoot.JSON.Data.descripcion =
+			TRIM(CAST(InputRoot.DFDL.REGMOVIMIENTO.DESCRIPCION AS CHARACTER));
+
+		RETURN TRUE;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE endOfDataCompute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DELETE FIELD OutputRoot;
+		CREATE LASTCHILD OF OutputRoot DOMAIN('JSON');
+
+		SET OutputRoot.JSON.Data.totalProcesados = totalProcesados;
+		SET OutputRoot.JSON.Data.totalRechazados = totalRechazados;
+		SET OutputRoot.JSON.Data.totalDebitos = totalDebitos;
+		SET OutputRoot.JSON.Data.sumaTotalDebitos = sumaDebitos;
+
+		SET totalProcesados = 0;
+		SET totalDebitos = 0;
+		SET totalRechazados = 0;
+		SET sumaDebitos = 0.00;
+
+		RETURN TRUE;
+	END;
+END MODULE;

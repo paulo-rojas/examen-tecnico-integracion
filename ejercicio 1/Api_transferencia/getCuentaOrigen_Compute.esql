@@ -1,0 +1,37 @@
+CREATE COMPUTE MODULE getCuentaOrigen_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		DECLARE refParams REFERENCE TO InputLocalEnvironment.REST.Input.Parameters;
+		DECLARE cuentaOrigen CHARACTER CAST(refParams.cuentaOrigen AS CHARACTER);
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		CREATE FIELD OutputRoot.JSON.Data;
+
+		SET OutputRoot.JSON.Data.cuentaOrigen = cuentaOrigen;
+
+		IF cuentaOrigen = '001100220033' THEN
+			SET OutputRoot.JSON.Data.saldo = 1000.00;
+
+		ELSEIF cuentaOrigen = '002200330044' THEN
+			SET OutputRoot.JSON.Data.saldo = 750.50;
+
+		ELSEIF cuentaOrigen = '003300440055' THEN
+			SET OutputRoot.JSON.Data.saldo = 500.00;
+
+		ELSEIF cuentaOrigen = '004400550066' THEN
+			SET OutputRoot.JSON.Data.saldo = 100.00;
+
+		ELSEIF cuentaOrigen = '005500660077' THEN
+			SET OutputRoot.JSON.Data.saldo = 50.00;
+
+		ELSEIF cuentaOrigen = '006600770088' THEN
+			SET OutputRoot.JSON.Data.saldo = 50.00;
+
+		ELSE
+			SET OutputRoot.JSON.Data.saldo = 0.00;
+		END IF;
+
+		RETURN TRUE;
+	END;
+END MODULE;

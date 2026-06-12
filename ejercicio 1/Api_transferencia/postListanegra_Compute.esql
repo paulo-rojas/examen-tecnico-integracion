@@ -1,0 +1,30 @@
+CREATE COMPUTE MODULE postListanegraCompute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		DECLARE refParams REFERENCE TO InputLocalEnvironment.HTTP.Input.QueryString;
+		DECLARE ruc CHARACTER CAST(refParams.ruc AS CHARACTER);
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		CREATE FIELD OutputRoot.JSON.Data;
+
+		SET OutputRoot.JSON.Data.rucDestinatario = ruc;
+
+		IF ruc = '20999999999'
+			OR ruc = '20111111111'
+			OR ruc = '20222222222'
+			OR ruc = '20333333333'
+			OR ruc = '20444444444'
+			OR ruc = '20555555555' THEN
+
+			SET OutputRoot.JSON.Data.valido = 0;
+			SET OutputRoot.JSON.Data.motivo = 'RUC reportado en lista negra';
+		ELSE
+			SET OutputRoot.JSON.Data.valido = 1;
+			SET OutputRoot.JSON.Data.motivo = 'RUC habilitado';
+		END IF;
+
+		RETURN TRUE;
+	END;
+
+END MODULE;

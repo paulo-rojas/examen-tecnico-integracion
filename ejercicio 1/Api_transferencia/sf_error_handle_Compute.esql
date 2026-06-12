@@ -1,0 +1,23 @@
+CREATE COMPUTE MODULE sf_error_handle_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		DECLARE refInput REFERENCE TO InputRoot.JSON.Data;
+		
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		CREATE FIELD OutputRoot.JSON.Data;
+		
+		DECLARE refOutput REFERENCE TO OutputRoot.JSON.Data;
+		
+		SET refOutput.codigo 		= refInput.error.codigo;
+		SET refOutput.mensaje 		= refInput.error.mensaje;
+		SET refOutput.timestamp 	= CAST(CURRENT_TIMESTAMP AS CHARACTER);
+		SET refOutput.correlationId = Environment.Variables.correlationId;
+		
+		SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 	CAST(refInput.error.codigo AS INTEGER);
+		SET OutputRoot.HTTPResponseHeader."X-Correlation-ID" 		=	Environment.Variables.correlationId;
+		
+		RETURN TRUE;
+	END;
+
+END MODULE;

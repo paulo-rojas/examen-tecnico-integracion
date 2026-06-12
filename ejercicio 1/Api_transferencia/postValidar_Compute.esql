@@ -1,0 +1,115 @@
+CREATE COMPUTE MODULE armarRequestCompute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refInput REFERENCE TO InputRoot.JSON.Data;
+		DECLARE url CHARACTER 'http://localhost:7800/api_transferencia/v1/saldo/';
+
+		SET Environment.Variables.operacion = InputRoot.JSON.Data;
+
+		SET url = url || CAST(refInput.cuentaOrigen AS CHARACTER);
+
+		SET OutputLocalEnvironment.Destination.HTTP.Method 			= 'GET';
+		SET OutputLocalEnvironment.Destination.HTTP.RequestURL 		= url;
+		SET OutputLocalEnvironment.Destination.HTTP.TimeoutMillis 	= Environment.Variables.timeoutMs;
+
+		SET OutputRoot.HTTPRequestHeader."X-Correlation-ID" = Environment.Variables.correlationId;
+		SET OutputRoot.HTTPRequestHeader."X-Client-Id" 		= Environment.Variables.clientId;
+
+		RETURN TRUE;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE validarSaldoCompute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refInput REFERENCE TO InputRoot.JSON.Data;
+		DECLARE refOperacion REFERENCE TO Environment.Variables.operacion;
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		CREATE FIELD OutputRoot.JSON.Data;
+		DECLARE refOutput REFERENCE TO OutputRoot.JSON.Data;
+
+		IF refInput.saldo < refOperacion.monto THEN
+			SET refOutput.error.codigo 			= '422';
+			SET refOutput.error.mensaje 		= 'SALDO_INSUFICIENTE';
+			SET refOutput.error.correlationId 	= Environment.Variables.correlationId;
+
+			SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 422;
+			SET OutputRoot.HTTPResponseHeader."X-Correlation-ID" 		= Environment.Variables.correlationId;
+
+			PROPAGATE TO TERMINAL 'out1';
+			RETURN FALSE;
+		END IF;
+
+		--verificar si está en la lista negra
+		DECLARE ruc CHARACTER CAST(refOperacion.rucDestinatario AS CHARACTER);
+		DECLARE url CHARACTER CAST(Environment.Variables.tokenEndpoint AS CHARACTER) || '?ruc='	|| ruc;
+
+		SET OutputLocalEnvironment.Destination.HTTP.Method = 'POST';
+		SET OutputLocalEnvironment.Destination.HTTP.RequestURL = url;
+		SET OutputLocalEnvironment.Destination.HTTP.TimeoutMillis 	= Environment.Variables.timeoutMs;
+
+		SET OutputRoot.HTTPRequestHeader."X-Correlation-ID" = Environment.Variables.correlationId;
+		SET OutputRoot.HTTPRequestHeader."X-Client-Id" 		= Environment.Variables.clientId;
+		
+		RETURN TRUE;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE validarListanegraCompute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		DECLARE refOperacion REFERENCE TO Environment.Variables.operacion;
+		DECLARE refInput REFERENCE TO InputRoot.JSON.Data;
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		CREATE FIELD OutputRoot.JSON.Data;
+		DECLARE refOutput REFERENCE TO OutputRoot.JSON.Data;
+
+		IF refInput.valido = 0 THEN
+			SET refOutput.error.codigo = '403';
+			SET refOutput.error.mensaje = 'DESTINATARIO_BLOQUEADO';
+			SET refOutput.error.correlationId = Environment.Variables.correlationId;
+			
+			SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 403;
+			SET OutputRoot.HTTPResponseHeader."X-Correlation-ID" = Environment.Variables.correlationId;
+
+			PROPAGATE TO TERMINAL 'out1';
+			RETURN FALSE;
+		END IF;
+
+		--MQ
+		SET refOutput.cuentaOrigen = refOperacion.cuentaOrigen;
+		SET refOutput.cuentaDestino = refOperacion.cuentaDestino;
+		SET refOutput.rucDestinatario = refOperacion.rucDestinatario;
+		SET refOutput.monto = refOperacion.monto;
+		SET refOutput.moneda = refOperacion.moneda;
+		SET refOutput.concepto = refOperacion.concepto;
+		SET refOutput.estado = 'APROBADA';
+		SET refOutput.correlationId = Environment.Variables.correlationId;
+		SET refOutput.timestampAprobacion = CAST(CURRENT_TIMESTAMP AS CHARACTER);
+
+		RETURN TRUE;
+	END;
+END MODULE;
+
+
+CREATE COMPUTE MODULE validarEncolamientoCompute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputLocalEnvironment.Destination.HTTP.ReplyStatusCode = 202;
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		CREATE FIELD OutputRoot.JSON.Data;
+
+		SET OutputRoot.JSON.Data.codigo = 'TRANSFERENCIA_ACEPTADA';
+		SET OutputRoot.JSON.Data.estado = 'APROBADA';
+		SET OutputRoot.JSON.Data.correlationId = Environment.Variables.correlationId;
+
+		SET OutputRoot.HTTPResponseHeader."X-Correlation-ID" = Environment.Variables.correlationId;
+
+		RETURN TRUE;
+	END;
+END MODULE;

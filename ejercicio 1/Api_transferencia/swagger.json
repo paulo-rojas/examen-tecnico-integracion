@@ -1,0 +1,76 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "title" : "Api_transferencia",
+    "version" : "1.0.0",
+    "description" : "Api_transferencia"
+  },
+  "paths" : {
+    "/transferencia/validar" : {
+      "post" : {
+        "operationId" : "postValidar",
+        "responses" : {
+          "200" : {
+            "description" : "The operation was successful."
+          }
+        },
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "description" : "Insert a validar",
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "schema" : {
+            "type" : "string"
+          },
+          "description" : "The request body for the operation",
+          "required" : true
+        } ]
+      }
+    },
+    "/saldo/{cuentaOrigen}" : {
+      "get" : {
+        "operationId" : "getCuentaOrigen",
+        "responses" : {
+          "200" : {
+            "description" : "The operation was successful.",
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "description" : "Retrieve cuentaOrigen",
+        "parameters" : [ {
+          "required" : true,
+          "name" : "cuentaOrigen",
+          "in" : "path",
+          "type" : "string"
+        } ]
+      }
+    },
+    "/listanegra" : {
+      "post" : {
+        "operationId" : "postListanegra",
+        "responses" : {
+          "200" : {
+            "description" : "The operation was successful."
+          }
+        },
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "description" : "Insert a listanegra",
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "schema" : {
+            "type" : "string"
+          },
+          "description" : "The request body for the operation",
+          "required" : true
+        } ]
+      }
+    }
+  },
+  "basePath" : "/api_transferencia/v1"
+}
