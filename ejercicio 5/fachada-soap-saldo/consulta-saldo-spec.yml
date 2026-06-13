@@ -1,0 +1,54 @@
+openapi: 3.0.4
+info:
+  title: consulta-saldo
+  version: '1.0'
+  description: Fachada REST para consultar un servicio SOAP legacy
+  contact:
+    name: API Support
+servers:
+  - url: https://example.com
+tags:
+  - name: Saldos
+    description: Operaciones de consulta de saldo
+paths:
+  /legacy/saldo/{cuenta}:
+    get:
+      tags:
+        - Saldos
+      operationId: getSaldo
+      summary: Consultar saldo de una cuenta
+      description: Consulta el saldo disponible en el servicio SOAP legacy.
+      parameters:
+        - name: cuenta
+          in: path
+          required: true
+          schema:
+            type: string
+          example: '123456'
+      responses:
+        '200':
+          description: Saldo consultado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  disponible:
+                    type: number
+                  moneda:
+                    type: string
+                  ultimaActualizacion:
+                    type: string
+                  tiempoBackendMs:
+                    type: integer
+        '502':
+          description: Error del servicio SOAP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  codigo:
+                    type: string
+                  mensaje:
+                    type: string

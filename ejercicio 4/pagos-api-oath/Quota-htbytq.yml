@@ -1,0 +1,22 @@
+kind: Quota
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Quota-htbytq
+  namespace: pagos-api-oauth
+  version: '1.0'
+  description: ''
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  maxRequest: 50
+  interval: 1m
+  extensions:
+    dp-nano-gateway:
+      apiVersion: api.ibm.com/v1
+      spec:
+        weightExpr: ''
+        exceedAction: return429
+        intervalOffset: 0
+        dynamicValue: ''

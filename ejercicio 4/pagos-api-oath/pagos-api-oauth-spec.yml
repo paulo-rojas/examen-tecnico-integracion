@@ -1,0 +1,248 @@
+openapi: 3.0.4
+info:
+  title: pagos-api-oauth
+  version: '1.0'
+  description: API para iniciar, consultar y cancelar pagos con seguridad OAuth2.
+  contact:
+    name: Payments API Team
+    email: payments-api@example.com
+servers:
+  - url: /pagos/v1
+tags:
+  - name: Payments
+    description: Operaciones de pagos.
+paths:
+  /initiate:
+    post:
+      tags:
+        - Payments
+      summary: Initiate a payment
+      description: Validates and initiates a payment through the ACE backend.
+      operationId: initiatePayment
+      security:
+        - oauth2:
+            - pagos:write
+      requestBody:
+        required: true
+        description: Payment data required to initiate the operation.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cuentaOrigen
+                - cuentaDestino
+                - monto
+                - moneda
+                - concepto
+              properties:
+                cuentaOrigen:
+                  type: string
+                cuentaDestino:
+                  type: string
+                monto:
+                  type: number
+                  format: double
+                  minimum: 0
+                  exclusiveMinimum: true
+                moneda:
+                  type: string
+                  enum:
+                    - PEN
+                    - USD
+                concepto:
+                  type: string
+                  maxLength: 200
+      responses:
+        '200':
+          description: Payment initiated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid OAuth2 access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal processing error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /status/{paymentId}:
+    get:
+      tags:
+        - Payments
+      summary: Get payment status
+      description: Returns the current status of a payment.
+      operationId: getPaymentStatus
+      security:
+        - oauth2:
+            - pagos:read
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: Payment identifier.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment status returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatus'
+        '400':
+          description: Invalid payment identifier.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid OAuth2 access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal processing error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cancel/{paymentId}:
+    delete:
+      tags:
+        - Payments
+      summary: Cancel a payment
+      description: Cancels an existing payment.
+      operationId: cancelPayment
+      security:
+        - oauth2:
+            - pagos:write
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          description: Payment identifier.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment cancelled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResponse'
+        '400':
+          description: Invalid payment identifier.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid OAuth2 access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal processing error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: OAuth2 client credentials for payments API.
+      flows:
+        clientCredentials:
+          tokenUrl: https://oauth.example.com/oauth2/token
+          scopes:
+            pagos:read: Read payment status.
+            pagos:write: Initiate and cancel payments.
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+        - timestamp
+      properties:
+        code:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+          example: Request validation failed.
+        timestamp:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+          example: 550e8400-e29b-41d4-a716-446655440000
+    PaymentResponse:
+      type: object
+      required:
+        - paymentId
+        - estado
+      properties:
+        paymentId:
+          type: string
+          example: PAY-10001
+        estado:
+          type: string
+          example: APROBADA
+        mensaje:
+          type: string
+          example: Payment initiated.
+    PaymentStatus:
+      type: object
+      required:
+        - paymentId
+        - estado
+      properties:
+        paymentId:
+          type: string
+          example: PAY-10001
+        estado:
+          type: string
+          enum:
+            - PENDING
+            - APPROVED
+            - REJECTED
+            - CANCELLED
+        fechaActualizacion:
+          type: string
+          format: date-time
+    CancelResponse:
+      type: object
+      required:
+        - paymentId
+        - estado
+      properties:
+        paymentId:
+          type: string
+          example: PAY-10001
+        estado:
+          type: string
+          example: CANCELLED
+        mensaje:
+          type: string
+          example: Payment cancelled.
+security:
+  - oauth2:
+      - pagos:read
+      - pagos:write

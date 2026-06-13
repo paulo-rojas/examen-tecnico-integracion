@@ -1,0 +1,33 @@
+kind: Plan
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Premium
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  description: Premium plan with access to all endpoints.
+spec:
+  qos:
+    withQuota: {}
+  extensions:
+    webm-gateway:
+      apiVersion: api.ibm.com/v1
+      spec:
+        withRateLimit:
+          - name: premium-rate-limit
+            maxRequest: 500
+            interval: 1m
+            alertFrequency: once
+            alertMessage: Premium plan rate limit reached
+    dp-nano-gateway:
+      apiVersion: api.ibm.com/v1
+      spec:
+        apis:
+          - $ref: pagos-api-oauth:pagos-api-oauth:1.0
+            operations:
+              - path: /initiate
+                method: post
+              - path: /status/{paymentId}
+                method: get
+              - path: /cancel/{paymentId}
+                method: delete

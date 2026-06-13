@@ -1,0 +1,13 @@
+kind: API
+apiVersion: api.ibm.com/v1
+metadata:
+  name: pagos-api-oauth
+  version: '1.0'
+  namespace: pagos-api-oauth
+  tags: []
+  type: REST
+spec:
+  api-spec:
+    $path: ./pagos-api-oauth-spec.yml
+  policy-sequence:
+    - $ref: pagos-api-oauth:pagos-assembly:1.0

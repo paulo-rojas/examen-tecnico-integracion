@@ -1,0 +1,60 @@
+kind: DataPowerAssembly
+apiVersion: api.ibm.com/v1
+metadata:
+  name: mock-soap-assembly
+  namespace: fachada-soap-saldo
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - datapower
+spec:
+  x-ibm-configuration:
+    gateway: datapower-api-gateway
+    assembly:
+      execute:
+        - gatewayscript:
+            version: 2.0.0
+            title: mock-respuesta-soap
+            source: |-
+              var requestBody = context.get('message.body');
+              var texto = requestBody ? requestBody.toString() : '';
+
+              var esFault = texto.indexOf(
+                '<sal:cuenta>999</sal:cuenta>'
+              ) !== -1;
+
+              var respuesta;
+
+              if (esFault) {
+                respuesta =
+                  '<?xml version="1.0" encoding="UTF-8"?>' +
+                  '<soapenv:Envelope ' +
+                  'xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">' +
+                  '<soapenv:Body><soapenv:Fault>' +
+                  '<faultcode>soapenv:Server</faultcode>' +
+                  '<faultstring>Cuenta bloqueada</faultstring>' +
+                  '</soapenv:Fault></soapenv:Body>' +
+                  '</soapenv:Envelope>';
+              } else {
+                respuesta =
+                  '<?xml version="1.0" encoding="UTF-8"?>' +
+                  '<soapenv:Envelope ' +
+                  'xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">' +
+                  '<soapenv:Body><getSaldoResponse>' +
+                  '<saldo><disponible>1500.75</disponible>' +
+                  '<moneda>PEN</moneda>' +
+                  '<ultimaActualizacion>2026-06-12T10:30:00Z</ultimaActualizacion>' +
+                  '</saldo></getSaldoResponse></soapenv:Body>' +
+                  '</soapenv:Envelope>';
+              }
+
+              context.set('message.status.code', 200);
+              context.set(
+                'message.headers.Content-Type',
+                'text/xml; charset=UTF-8'
+              );
+              context.set('message.body', respuesta);
+    phase: realized
+    enforced: false
+    testable: false

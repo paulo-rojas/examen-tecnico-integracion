@@ -1,0 +1,13 @@
+kind: API
+apiVersion: api.ibm.com/v1
+metadata:
+  name: mock-soap-saldo
+  version: '1.0'
+  namespace: fachada-soap-saldo
+  tags: []
+  type: REST
+spec:
+  api-spec:
+    $path: ./mock-soap-saldo-spec.yml
+  policy-sequence:
+    - $ref: fachada-soap-saldo:mock-soap-assembly:1.0

@@ -1,0 +1,21 @@
+kind: Invoke
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Invoke-nweTc
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  endpoint:
+    http:
+      target:
+        persistentConnections: false
+        timeout: 30
+        url: https://httpbin.org/xml
+        decompressResponse: false
+        followRedirects: false
+        chunkedUpload: false
+  output: response

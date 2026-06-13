@@ -1,0 +1,17 @@
+kind: Set
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Set-TT6SX
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  valueType: plain
+  messageBody:
+    messageName: response
+    value: >-
+      {"code":"PROCESSING_ERROR","message":"The request could not be
+      processed.","timestamp":"2026-06-12T12:00:00Z","correlationId":"not-available"}

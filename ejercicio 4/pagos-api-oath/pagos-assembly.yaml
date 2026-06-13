@@ -1,0 +1,20 @@
+kind: FreeFlowPolicySequence
+apiVersion: api.ibm.com/v1
+metadata:
+  name: pagos-assembly
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  main:
+    - $ref: pagos-api-oauth:OperationSwitch-kgoo8:1.0
+    - $ref: pagos-api-oauth:invoke-pagos-assembly:1.0
+  monitoring:
+    $ref: pagos-api-oauth:telemetry-pagos-assembly:1.0
+  error:
+    - execute:
+        - $ref: pagos-api-oauth:Set-TT6SX:1.0
+        - $ref: pagos-api-oauth:Set-JNYLe:1.0

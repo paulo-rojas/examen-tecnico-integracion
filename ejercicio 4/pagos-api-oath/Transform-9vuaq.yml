@@ -1,0 +1,16 @@
+kind: Transform
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Transform-9vuaq
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  messageBody:
+    messageName: response
+    jsonataTransforms:
+      - transform: >-
+          {"paymentId":"PAY-10001","estado":"APPROVED","fechaActualizacion":"2026-06-12T12:00:00Z"}

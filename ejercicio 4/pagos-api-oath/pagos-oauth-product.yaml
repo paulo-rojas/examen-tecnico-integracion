@@ -1,0 +1,14 @@
+kind: Product
+apiVersion: api.ibm.com/v1
+metadata:
+  name: pagos-oauth-product
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+spec:
+  apis:
+    - $ref: pagos-api-oauth:pagos-api-oauth:1.0
+  plans:
+    - $ref: pagos-api-oauth:SandBox:1.0
+    - $ref: pagos-api-oauth:Basic:1.0
+    - $ref: pagos-api-oauth:Premium:1.0

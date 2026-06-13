@@ -1,0 +1,33 @@
+openapi: 3.0.4
+info:
+  title: mock-soap-saldo
+  version: '1.0'
+  description: Backend SOAP simulado
+  contact:
+    name: API Support
+servers:
+  - url: https://example.com
+tags:
+  - name: SOAP Mock
+    description: Simulación del backend SOAP
+paths:
+  /ConsultaSaldoWS:
+    post:
+      tags:
+        - SOAP Mock
+      operationId: consultaSaldoSoap
+      summary: Simular ConsultaSaldoWS
+      description: Recibe una solicitud SOAP y devuelve una respuesta SOAP.
+      requestBody:
+        required: true
+        content:
+          text/xml:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Respuesta SOAP simulada
+          content:
+            text/xml:
+              schema:
+                type: string

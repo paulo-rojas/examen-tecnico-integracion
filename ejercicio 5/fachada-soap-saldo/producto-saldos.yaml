@@ -1,0 +1,13 @@
+kind: Product
+apiVersion: api.ibm.com/v1
+metadata:
+  name: producto-saldos
+  namespace: fachada-soap-saldo
+  version: '1.0'
+  tags: []
+spec:
+  apis:
+    - $ref: fachada-soap-saldo:mock-soap-saldo:1.0
+    - $ref: fachada-soap-saldo:consulta-saldo:1.0
+  plans:
+    - $ref: fachada-soap-saldo:defaut-plan:1.0

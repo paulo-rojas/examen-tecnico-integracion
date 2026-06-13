@@ -1,0 +1,11 @@
+kind: Plan
+apiVersion: api.ibm.com/v1
+metadata:
+  name: defaut-plan
+  namespace: fachada-soap-saldo
+  version: '1.0'
+  tags: []
+  description: ''
+spec:
+  qos:
+    withQuota: {}

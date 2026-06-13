@@ -4,3 +4,5 @@
 **/.settings
 .metadata
 **/*.class
+**/*.bar
+**/*.bak

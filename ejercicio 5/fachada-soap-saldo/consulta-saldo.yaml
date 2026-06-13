@@ -1,0 +1,13 @@
+kind: API
+apiVersion: api.ibm.com/v1
+metadata:
+  name: consulta-saldo
+  version: '1.0'
+  namespace: fachada-soap-saldo
+  tags: []
+  type: REST
+spec:
+  api-spec:
+    $path: ./consulta-saldo-spec.yml
+  policy-sequence:
+    - $ref: fachada-soap-saldo:consulta-saldo-assembly:1.0

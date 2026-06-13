@@ -1,0 +1,206 @@
+kind: DataPowerAssembly
+apiVersion: api.ibm.com/v1
+metadata:
+  name: consulta-saldo-assembly
+  namespace: fachada-soap-saldo
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - datapower
+spec:
+  x-ibm-configuration:
+    gateway: datapower-api-gateway
+    properties:
+      backend-url:
+        value: https://example.com/ConsultaSaldoWS
+        description: URL del backend SOAP
+        encoded: false
+      soap-username:
+        value: usuario-demo
+        description: Usuario SOAP
+        encoded: false
+      soap-password:
+        value: clave-demo
+        description: Password SOAP
+        encoded: true
+    assembly:
+      execute:
+        - gatewayscript:
+            version: 2.0.0
+            title: construir-soap-ws-security
+            source: |-
+              var crypto = require('crypto');
+
+              var cuenta = context.get(
+                'request.parameters.cuenta.values[0]'
+              );
+              var username = context.get(
+                'api.properties.soap-username'
+              );
+              var password = context.get(
+                'api.properties.soap-password'
+              );
+
+              var created = new Date().toISOString();
+              var nonceBuffer = crypto.randomBytes(16);
+              var nonce = nonceBuffer.toString('base64');
+
+              var digestInput = Buffer.concat([
+                nonceBuffer,
+                Buffer.from(created, 'utf8'),
+                Buffer.from(password || '', 'utf8')
+              ]);
+
+              var passwordDigest = crypto
+                .createHash('sha1')
+                .update(digestInput)
+                .digest('base64');
+
+              var soap =
+                '<?xml version="1.0" encoding="UTF-8"?>' +
+                '<soapenv:Envelope ' +
+                'xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" ' +
+                'xmlns:sal="http://banco.example.com/saldos" ' +
+                'xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/' +
+                'oasis-200401-wss-wssecurity-secext-1.0.xsd" ' +
+                'xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/' +
+                'oasis-200401-wss-wssecurity-utility-1.0.xsd">' +
+                '<soapenv:Header><wsse:Security>' +
+                '<wsse:UsernameToken>' +
+                '<wsse:Username>' + username + '</wsse:Username>' +
+                '<wsse:Password Type="http://docs.oasis-open.org/wss/' +
+                '2004/01/oasis-200401-wss-username-token-profile-1.0' +
+                '#PasswordDigest">' + passwordDigest + '</wsse:Password>' +
+                '<wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/' +
+                '2004/01/oasis-200401-wss-soap-message-security-1.0' +
+                '#Base64Binary">' + nonce + '</wsse:Nonce>' +
+                '<wsu:Created>' + created + '</wsu:Created>' +
+                '</wsse:UsernameToken></wsse:Security></soapenv:Header>' +
+                '<soapenv:Body><sal:getSaldo>' +
+                '<sal:cuenta>' + cuenta + '</sal:cuenta>' +
+                '</sal:getSaldo></soapenv:Body>' +
+                '</soapenv:Envelope>';
+
+              context.set('message.body', soap);
+              context.set(
+                'message.headers.Content-Type',
+                'text/xml; charset=UTF-8'
+              );
+              context.set('message.headers.SOAPAction', 'getSaldo');
+              context.set('backend.start', Date.now());
+        - invoke:
+            version: 2.3.0
+            title: invocar-backend-soap
+            target-url: $(api.properties.backend-url)
+            verb: POST
+            backend-type: detect
+            timeout: 30
+            stop-on-error:
+              - ConnectionError
+            persistent-connection: true
+            header-control:
+              type: allowlist
+              values:
+                - Content-Type
+                - SOAPAction
+            parameter-control:
+              type: blocklist
+              values: []
+        - gatewayscript:
+            version: 2.0.0
+            title: procesar-respuesta-soap
+            source: |-
+              var transform = require('transform');
+              var body = context.get('message.body');
+              var inicio = context.get('backend.start');
+              var tiempoMs = Date.now() - inicio;
+
+              var xml = body && body.nodeType
+                ? body
+                : XML.parse(body.toString());
+
+              function xpathTexto(expression, callback) {
+                transform.xpath(expression, xml, function (error, nodes) {
+                  if (error) {
+                    throw error;
+                  }
+
+                  var value = '';
+                  if (nodes && nodes.length > 0) {
+                    value = nodes.item(0).nodeValue;
+                  }
+                  callback(value);
+                });
+              }
+
+              xpathTexto(
+                '//*[local-name()="Fault"]/*[local-name()="faultstring"]/text()',
+                function (fault) {
+                  if (fault) {
+                    context.set('message.status.code', 502);
+                    context.set(
+                      'message.headers.Content-Type',
+                      'application/json'
+                    );
+                    context.set('message.body', {
+                      codigo: 'SOAP_BACKEND_FAULT',
+                      mensaje: fault,
+                      tiempoBackendMs: tiempoMs
+                    });
+                    return;
+                  }
+
+                  xpathTexto(
+                    '//*[local-name()="saldo"]/*[local-name()="disponible"]/text()',
+                    function (disponible) {
+                      xpathTexto(
+                        '//*[local-name()="saldo"]/*[local-name()="moneda"]/text()',
+                        function (moneda) {
+                          xpathTexto(
+                            '//*[local-name()="saldo"]/*' +
+                            '[local-name()="ultimaActualizacion"]/text()',
+                            function (actualizacion) {
+                              context.set('message.status.code', 200);
+                              context.set(
+                                'message.headers.Content-Type',
+                                'application/json'
+                              );
+                              context.set('message.body', {
+                                disponible: Number(disponible),
+                                moneda: moneda,
+                                ultimaActualizacion: actualizacion,
+                                tiempoBackendMs: tiempoMs
+                              });
+                            }
+                          );
+                        }
+                      );
+                    }
+                  );
+                }
+              );
+      catch:
+        - errors:
+            - ConnectionError
+          execute:
+            - gatewayscript:
+                version: 2.0.0
+                title: manejar-error-backend
+                source: |-
+                  var inicio = context.get('backend.start');
+                  var tiempoMs = inicio ? Date.now() - inicio : 0;
+
+                  context.set('message.status.code', 502);
+                  context.set(
+                    'message.headers.Content-Type',
+                    'application/json'
+                  );
+                  context.set('message.body', {
+                    codigo: 'BACKEND_NO_DISPONIBLE',
+                    mensaje: 'No fue posible contactar al servicio SOAP',
+                    tiempoBackendMs: tiempoMs
+                  });
+    phase: realized
+    enforced: false
+    testable: false

@@ -1,0 +1,17 @@
+kind: Set
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Set-JNYLe
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  messageHeader:
+    action: set
+    headerName: Content-Type
+    value: application/json
+    messageName: response
+  valueType: plain

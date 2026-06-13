@@ -1,0 +1,25 @@
+kind: Plan
+apiVersion: api.ibm.com/v1
+metadata:
+  name: SandBox
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  description: Unlimited sandbox plan with access to all endpoints.
+spec:
+  qos:
+    withQuota:
+      unlimited: {}
+  extensions:
+    dp-nano-gateway:
+      apiVersion: api.ibm.com/v1
+      spec:
+        apis:
+          - $ref: pagos-api-oauth:pagos-api-oauth:1.0
+            operations:
+              - path: /initiate
+                method: post
+              - path: /status/{paymentId}
+                method: get
+              - path: /cancel/{paymentId}
+                method: delete

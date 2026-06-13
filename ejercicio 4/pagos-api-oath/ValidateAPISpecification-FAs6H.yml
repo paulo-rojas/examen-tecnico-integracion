@@ -1,0 +1,17 @@
+kind: ValidateAPISpecification
+apiVersion: api.ibm.com/v1
+metadata:
+  name: ValidateAPISpecification-FAs6H
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  labels:
+    gatewayTypes:
+      - nano
+spec:
+  input: request
+  validate:
+    request:
+      schema:
+        validate: true
+      contentType: true

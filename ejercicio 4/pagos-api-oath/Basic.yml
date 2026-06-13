@@ -1,0 +1,41 @@
+kind: Plan
+apiVersion: api.ibm.com/v1
+metadata:
+  name: Basic
+  namespace: pagos-api-oauth
+  version: '1.0'
+  tags: []
+  description: Basic plan with access only to payment status.
+spec:
+  qos:
+    withQuota:
+      basic-rate-limit:
+        - $ref: pagos-api-oauth:Quota-htbytq:1.0
+      basic-burst-limit:
+        - $ref: pagos-api-oauth:Quota-8z9dcp:1.0
+  extensions:
+    webm-gateway:
+      apiVersion: api.ibm.com/v1
+      spec:
+        withRateLimit:
+          - name: basic-rate-limit
+            maxRequest: 50
+            interval: 1m
+            alertFrequency: once
+            alertMessage: Basic plan rate limit reached
+    dp-nano-gateway:
+      apiVersion: api.ibm.com/v1
+      spec:
+        apis:
+          - $ref: pagos-api-oauth:pagos-api-oauth:1.0
+            operations:
+              - path: /status/{paymentId}
+                method: get
+    dp-gateway:
+      apiVersion: api.ibm.com/v1
+      spec:
+        apis:
+          - $ref: pagos-api-oauth:pagos-api-oauth:1.0
+            operations:
+              - path: /status/{paymentId}
+                method: get
