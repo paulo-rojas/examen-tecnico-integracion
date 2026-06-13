@@ -28,4 +28,22 @@ GET https://api-n-jnpn.trial.apiconnect.ibmappdomain.cloud/api-connect-q8-1/sand
 
 DELETE https://api-n-jnpn.trial.apiconnect.ibmappdomain.cloud/api-connect-q8-1/sandbox/pagos/v1/cancel/PAY-10001
 
+# ACTUALIZACIÓN
 
+Se publicó la API en ACE con un dominio público usando ngrok
+
+<img width="1466" height="732" alt="image" src="https://github.com/user-attachments/assets/8d16ecbd-74ad-40d5-a917-4710f33d7f70" />
+
+Se hicieron pruebas
+
+<img width="1595" height="487" alt="image" src="https://github.com/user-attachments/assets/a16b67d0-9a08-4b6d-9439-7b101c78746b" />
+
+Se agregó la url de la API en la política
+
+<img width="1800" height="918" alt="image" src="https://github.com/user-attachments/assets/eb774aeb-3f83-4ea5-a88f-532da3cb9c5b" />
+
+Se publicó, sin embargo el resultado fue el mismo
+
+<img width="1582" height="385" alt="image" src="https://github.com/user-attachments/assets/c63c8b06-8b1f-44dd-8c72-394378278198" />
+
+No se pudo determinar correctamente la causa por la cual no se pudo conectar a APIC, pero aparentemente está relacionado al proveedor, ya que no nuestra otro tipo de error, más que "read ECONNRESET"
